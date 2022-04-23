@@ -39,7 +39,6 @@ const encode = async () => {
     for (const file of files) {
       if (!file.endsWith('.png')) continue
       const imagePath = path.join(folderpath, file)
-      console.log(imagePath)
       const image = await readPngImage(imagePath);
       encoder.encodeImage(file.replace(/\.png$/, ''), image, folder.replace(/^\d-/, ''));
     }
