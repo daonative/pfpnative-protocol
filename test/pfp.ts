@@ -4,6 +4,7 @@ import { jestSnapshotPlugin } from "mocha-chai-jest-snapshot";
 import { ethers } from "hardhat";
 
 import ImageData from "../assets/image-data.json";
+import { parseEther } from "ethers/lib/utils";
 
 use(solidity);
 use(jestSnapshotPlugin());
@@ -21,18 +22,21 @@ describe("PFP Creator Contract", () => {
     const { bgcolors, palette, images } = ImageData;
     const { bodies, heads } = images;
 
-    await expect(creator.createPFPCollection(
-      "PFPNative",
-      "PFP",
-      bgcolors,
-      palette,
-      bodies.map(({ data }) => data),
-      heads.map(({ data }) => data)
-    )).to.emit(creator, 'PFPCollectionCreated');
+    await expect(
+      creator.createPFPCollection(
+        "PFPNative",
+        "PFP",
+        0,
+        bgcolors,
+        palette,
+        bodies.map(({ data }) => data),
+        heads.map(({ data }) => data)
+      )
+    ).to.emit(creator, "PFPCollectionCreated");
 
-    const [newCollectionAddress] = await creator.getPFPCollections()
-    const PFP = await ethers.getContractFactory('PFP')
-    const pfp = PFP.attach(newCollectionAddress)
+    const [newCollectionAddress] = await creator.getPFPCollections();
+    const PFP = await ethers.getContractFactory("PFP");
+    const pfp = PFP.attach(newCollectionAddress);
 
     const [owner] = await ethers.getSigners();
     const inviteCode = "invite-code";
@@ -51,7 +55,7 @@ describe("PFP Creator Contract", () => {
 describe("PFP Contract", () => {
   it("should deploy the contract", async () => {
     const PFP = await ethers.getContractFactory("PFP");
-    await PFP.deploy("PFPNative", "PFP");
+    await PFP.deploy("PFPNative", "PFP", 0);
   });
 
   it("should mint with a valid invite signature", async () => {
@@ -66,7 +70,7 @@ describe("PFP Contract", () => {
     );
 
     const PFP = await ethers.getContractFactory("PFP");
-    const pfp = await PFP.deploy("PFPNative", "PFP");
+    const pfp = await PFP.deploy("PFPNative", "PFP", 0);
 
     const { bgcolors, palette, images } = ImageData;
     const { bodies, heads } = images;
@@ -95,7 +99,7 @@ describe("PFP Contract", () => {
     );
 
     const PFP = await ethers.getContractFactory("PFP");
-    const pfp = await PFP.deploy("PFPNative", "PFP");
+    const pfp = await PFP.deploy("PFPNative", "PFP", 0);
 
     const { bgcolors, palette, images } = ImageData;
     const { bodies, heads } = images;
@@ -110,6 +114,72 @@ describe("PFP Contract", () => {
     );
   });
 
+  it("should not mint below price point", async () => {
+    const [owner] = await ethers.getSigners();
+    const inviteCode = "invite-code";
+    const messageHash = ethers.utils.solidityKeccak256(
+      ["string"],
+      [inviteCode]
+    );
+    const signature = await owner.signMessage(
+      ethers.utils.arrayify(messageHash)
+    );
+
+    const PFP = await ethers.getContractFactory("PFP");
+    const pfp = await PFP.deploy("PFPNative", "PFP", parseEther("1"));
+
+    const { bgcolors, palette, images } = ImageData;
+    const { bodies, heads } = images;
+
+    await pfp.addManyBackgrounds(bgcolors);
+    await pfp.addManyColorsToPalette(0, palette);
+    await pfp.addManyBodies(bodies.map(({ data }) => data));
+    await pfp.addManyHeads(heads.map(({ data }) => data));
+
+    await expect(pfp.safeMint(inviteCode, signature)).to.be.revertedWith(
+      "Not enough ETH to mint, check price"
+    );
+    await expect(
+      pfp.safeMint(inviteCode, signature, { value: parseEther("0.1") })
+    ).to.be.revertedWith("Not enough ETH to mint, check price");
+  });
+
+  it.only("should mint and collect a fee", async () => {
+    const [owner, someoneElse] = await ethers.getSigners();
+    const inviteCode = "invite-code";
+    const messageHash = ethers.utils.solidityKeccak256(
+      ["string"],
+      [inviteCode]
+    );
+    const signature = await owner.signMessage(
+      ethers.utils.arrayify(messageHash)
+    );
+
+    const PFP = await ethers.getContractFactory("PFP");
+    const pfp = await PFP.deploy("PFPNative", "PFP", parseEther("1"));
+
+    const { bgcolors, palette, images } = ImageData;
+    const { bodies, heads } = images;
+
+    await pfp.addManyBackgrounds(bgcolors);
+    await pfp.addManyColorsToPalette(0, palette);
+    await pfp.addManyBodies(bodies.map(({ data }) => data));
+    await pfp.addManyHeads(heads.map(({ data }) => data));
+
+    await expect(
+      pfp.safeMint(inviteCode, signature, { value: parseEther("1") })
+    ).to.emit(pfp, "Transfer");
+    await expect(
+      pfp.connect(someoneElse).withdraw(parseEther("1"))
+    ).to.be.revertedWith("Ownable: caller is not the owner")
+    await expect(
+      pfp.withdraw(parseEther("1.1"))
+    ).to.be.revertedWith("withdrawal amount cannot be higher than balance")
+    await expect(
+      pfp.withdraw(parseEther("1"))
+    ).to.emit(pfp, "Withdraw");
+  });
+
   it("should have generated an image", async () => {
     const [owner] = await ethers.getSigners();
     const inviteCode = "invite-code";
@@ -122,7 +192,7 @@ describe("PFP Contract", () => {
     );
 
     const PFP = await ethers.getContractFactory("PFP");
-    const pfp = await PFP.deploy("PFPNative", "PFP");
+    const pfp = await PFP.deploy("PFPNative", "PFP", 0);
 
     const { bgcolors, palette, images } = ImageData;
     const { bodies, heads } = images;

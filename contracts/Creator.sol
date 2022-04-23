@@ -9,12 +9,13 @@ contract Creator {
     function createPFPCollection(
         string memory name,
         string memory symbol,
+        uint price,
         string[] memory backgrounds,
         string[] memory palette,
         bytes[] memory heads,
         bytes[] memory bodies
     ) external returns (PFP) {
-        PFP newPFPCollection = new PFP(name, symbol);
+        PFP newPFPCollection = new PFP(name, symbol, price);
 
         newPFPCollection.addManyBackgrounds(backgrounds);
         newPFPCollection.addManyColorsToPalette(0, palette);
@@ -23,7 +24,6 @@ contract Creator {
         newPFPCollection.transferOwnership(msg.sender);
 
         allPFPCollections.push(newPFPCollection);
-
 
         emit PFPCollectionCreated(address(newPFPCollection));
         return newPFPCollection;

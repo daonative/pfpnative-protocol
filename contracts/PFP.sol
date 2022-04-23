@@ -183,10 +183,19 @@ contract PFP is ERC721, ERC721Enumerable, Ownable, ERC721Burnable {
   bytes[] public bodies;
   bytes[] public heads;
 
+  // Price of an NFT
+  uint256 price;
+
+  // Withdraw
+  event Withdraw(address indexed owner, uint indexed amount);
+
   constructor(
     string memory _name,
-    string memory _symbol
-  ) ERC721(_name, _symbol) {}
+    string memory _symbol,
+    uint256 _price
+  ) ERC721(_name, _symbol) {
+    price = _price;
+  }
 
   struct TokenURIParams {
     string name;
@@ -234,15 +243,29 @@ contract PFP is ERC721, ERC721Enumerable, Ownable, ERC721Burnable {
       Base64.encode(bytes(MultiPartRLEToSVG.generateSVG(params, _palettes)));
   }
 
-  function safeMint(string memory inviteCode, bytes memory signature) public {
+  function safeMint(string memory inviteCode, bytes memory signature)
+    public
+    payable
+  {
     require(
       _verifySignature(inviteCode, signature, owner()) == true,
       "Invalid signature"
     );
+    require(msg.value >= price, "Not enough ETH to mint, check price");
     uint256 tokenId = _tokenIdCounter.current();
     _tokenIdCounter.increment();
     _safeMint(msg.sender, tokenId);
     seeds[tokenId] = _generateSeed(tokenId);
+  }
+
+  function withdraw(uint256 amount) external onlyOwner {
+    require(
+      amount <= address(this).balance,
+      "withdrawal amount cannot be higher than balance"
+    );
+    (bool success, ) = msg.sender.call{ value: amount }("");
+    require(success, "Transfer failed.");
+    emit Withdraw(msg.sender, amount);
   }
 
   function tokenSeed(uint256 tokenId) external view returns (Seed memory) {
