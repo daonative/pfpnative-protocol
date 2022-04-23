@@ -114,6 +114,13 @@ describe("PFP Contract", () => {
     );
   });
 
+  it("should have a mint price", async () => {
+    const price = parseEther("1")
+    const PFP = await ethers.getContractFactory("PFP");
+    const pfp = await PFP.deploy("PFPNative", "PFP", price);
+    expect(await pfp.price()).to.be.equal(price)
+  })
+
   it("should not mint below price point", async () => {
     const [owner] = await ethers.getSigners();
     const inviteCode = "invite-code";
@@ -144,7 +151,7 @@ describe("PFP Contract", () => {
     ).to.be.revertedWith("Not enough ETH to mint, check price");
   });
 
-  it.only("should mint and collect a fee", async () => {
+  it("should mint and collect a fee", async () => {
     const [owner, someoneElse] = await ethers.getSigners();
     const inviteCode = "invite-code";
     const messageHash = ethers.utils.solidityKeccak256(

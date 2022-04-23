@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -184,17 +184,17 @@ contract PFP is ERC721, ERC721Enumerable, Ownable, ERC721Burnable {
   bytes[] public heads;
 
   // Price of an NFT
-  uint256 price;
+  uint256 mintPrice;
 
   // Withdraw
-  event Withdraw(address indexed owner, uint indexed amount);
+  event Withdraw(address indexed owner, uint256 indexed amount);
 
   constructor(
     string memory _name,
     string memory _symbol,
     uint256 _price
   ) ERC721(_name, _symbol) {
-    price = _price;
+    mintPrice = _price;
   }
 
   struct TokenURIParams {
@@ -251,7 +251,7 @@ contract PFP is ERC721, ERC721Enumerable, Ownable, ERC721Burnable {
       _verifySignature(inviteCode, signature, owner()) == true,
       "Invalid signature"
     );
-    require(msg.value >= price, "Not enough ETH to mint, check price");
+    require(msg.value >= mintPrice, "Not enough ETH to mint, check price");
     uint256 tokenId = _tokenIdCounter.current();
     _tokenIdCounter.increment();
     _safeMint(msg.sender, tokenId);
@@ -321,6 +321,10 @@ contract PFP is ERC721, ERC721Enumerable, Ownable, ERC721Burnable {
     for (uint256 i = 0; i < _heads.length; i++) {
       _addHead(_heads[i]);
     }
+  }
+
+  function price() public view returns (uint256) {
+    return mintPrice;
   }
 
   function tokenURI(uint256 tokenId)
