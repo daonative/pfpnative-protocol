@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 import { Base64 } from "base64-sol/base64.sol";
 
@@ -222,7 +223,7 @@ contract PFP is ERC721, ERC721Enumerable, Ownable, ERC721Burnable {
           )
         )
       )
-        );
+    );
   }
 
   /**
@@ -309,12 +310,11 @@ contract PFP is ERC721, ERC721Enumerable, Ownable, ERC721Burnable {
     returns (string memory)
   {
     Seed memory seed = seeds[tokenId];
-    string memory name = string(abi.encodePacked("Noun"));
-    string memory description = string(
-      abi.encodePacked("Noun is a member of the Nouns DAO")
-    );
+    string memory id = Strings.toString(tokenId);
+    string memory tokenName = string(abi.encodePacked(symbol(), " ", id));
+    string memory tokenDescription = string(abi.encodePacked(name()));
 
-    return genericDataURI(name, description, seed);
+    return genericDataURI(tokenName, tokenDescription, seed);
   }
 
   function genericDataURI(
