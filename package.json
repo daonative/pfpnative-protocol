@@ -30,11 +30,14 @@
   },
   "dependencies": {
     "@alch/alchemy-web3": "^1.1.2",
+    "@nouns/sdk": "^0.1.6",
     "@openzeppelin/contracts": "^4.3.0",
+    "@types/pngjs": "^6.0.1",
     "dotenv": "^10.0.0",
     "hardhat-gas-reporter": "^1.0.6",
     "hardhat-watcher": "^2.1.1",
     "ipfs": "0.54.5",
+    "pngjs": "^6.0.0",
     "solidity-coverage": "^0.7.17"
   },
   "scripts": {
@@ -43,6 +46,7 @@
     "deploy:local": "hardhat run  scripts/deploy.js",
     "slither": "slither .",
     "test": "hardhat test",
-    "test:watch": "hardhat watch test"
+    "test:watch": "hardhat watch test",
+    "encode:assets": "ts-node assets/encode.ts"
   }
 }
