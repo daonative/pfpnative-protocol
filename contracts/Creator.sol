@@ -2,17 +2,30 @@
 pragma solidity ^0.8.13;
 import './PFP.sol';
 
-contract CollectionCreator {
+contract Creator {
     PFP[] public allPFPCollections;
     event PFPCollectionCreated(address indexed newCollection);
 
     function createPFPCollection(
         string memory name,
-        string memory symbol
+        string memory symbol,
+        string[] memory backgrounds,
+        string[] memory palette,
+        bytes[] memory heads,
+        bytes[] memory bodies
     ) external returns (PFP) {
-        PFP newPFPCollection = new PFP(msg.sender, name, symbol);
-        emit PFPCollectionCreated(address(newPFPCollection));
+        PFP newPFPCollection = new PFP(name, symbol);
+
+        newPFPCollection.addManyBackgrounds(backgrounds);
+        newPFPCollection.addManyColorsToPalette(0, palette);
+        newPFPCollection.addManyHeads(heads);
+        newPFPCollection.addManyBodies(bodies);
+        newPFPCollection.transferOwnership(msg.sender);
+
         allPFPCollections.push(newPFPCollection);
+
+
+        emit PFPCollectionCreated(address(newPFPCollection));
         return newPFPCollection;
     }
 

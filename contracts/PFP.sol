@@ -184,12 +184,9 @@ contract PFP is ERC721, ERC721Enumerable, Ownable, ERC721Burnable {
   bytes[] public heads;
 
   constructor(
-    address _owner,
     string memory _name,
     string memory _symbol
-  ) ERC721(_name, _symbol) {
-    transferOwnership(_owner);
-  }
+  ) ERC721(_name, _symbol) {}
 
   struct TokenURIParams {
     string name;
